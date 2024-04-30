@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>React Blog</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/prop-types/prop-types.js"></script>
+</head>
+<body>
+
+    <div id="root"></div>
+    <script type="text/babel">
+    const Header = () => {
+        return (
+            React.createElement('header', { className: 'header' }, 'WELCOME TO MY BLOG')
+        );
+    };
+
+    const Footer = () => {
+        return (
+            React.createElement('footer', { className: 'footer' }, 'Copyright 2024 UVG')
+        );
+    };
+    const Post = ({ title, description, team, goals_scored, image_base64 }) => {
+    return React.createElement(
+        'div',
+        { className: 'post' },
+        React.createElement('img', { src: image_base64, className: 'post-image', alt: 'Post Image' }),
+        React.createElement(
+            'div',
+            { className: 'post-content' },
+            React.createElement('h1', { className: 'post-title' }, title),
+            React.createElement('p', { className: 'post-team' }, `Equipo: ${team}`),
+            React.createElement('p', { className: 'post-goals' }, `Goles: ${goals_scored}`),
+            React.createElement('p', { className: 'post-description' }, description)
+        )
+    );
+};
+
+
+    Post.propTypes = {
+        title: PropTypes.string.isRequired,
+        description: PropTypes.string.isRequired,
+        team: PropTypes.string.isRequired,
+        goals_scored: PropTypes.number.isRequired,
+        image_base64: PropTypes.string.isRequired
+    };
+
+    const Posts = () => {
+        const [posts, setPosts] = React.useState([]);
+        const [loading, setLoading] = React.useState(true);
+        const [error, setError] = React.useState(false); // Estado para controlar errores de la API
+
+        const getPosts = async () => {
+            try {
+                const apiResponse = await fetch('https://api.tiburoncin.lat/22596/posts');
+                if (!apiResponse.ok) {
+                    throw new Error('Error al obtener los posts');
+                }
+                const jsonPosts = await apiResponse.json();
+                const formattedPosts = jsonPosts.map(({ title, description, team, goals_scored, image_base64  }) => ({ title, description, team, goals_scored, image_base64  }));
+                setPosts(formattedPosts);
+            } catch (error) {
+                console.error('Error fetching posts:', error);
+                setError(true); // Establecer el estado de error en verdadero en caso de error de la API
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        React.useEffect(() => {
+            getPosts();
+        }, []);
+
+        if (loading) {
+            return <div className="loading"></div>;
+        }
+
+        if (error) {
+            return <div className="error">Error al cargar los posts. Inténtalo de nuevo más tarde.</div>;
+        }
+
+        if (posts.length === 0) {
+            return <div>No hay publicaciones disponibles en este momento.</div>;
+        }
+
+        return (
+            <ul className="posts-list">
+                {posts.map(({ title, description, team, goals_scored, image_base64}, index) => (
+                    <Post key={index} title={title} description={description} team={team} goals_scored={goals_scored} image_base64={image_base64} />
+                ))}
+            </ul>
+        );
+    };
+
+    const App = () => {
+        return (
+            React.createElement('main', { className: 'app' },
+                React.createElement(Header),
+                React.createElement(Posts),
+                React.createElement(Footer)
+            )
+        );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+    </script>
+
+</body>
+</html>
